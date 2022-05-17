@@ -1,0 +1,91 @@
+# import necessary modules
+import math
+import cv2
+from scipy.spatial import distance as dist
+import glob
+
+# REFERENCE IMAGE #
+width = 50  # width of the reference circle in mm
+image = cv2.imread(r'image path')   # read initial frame
+
+# array to store displacement and angle values
+measure_disp = []
+measure_angle = []
+
+# convert image to grayscale
+# apply Gaussian Blur to remove noise
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+# obtain image threshold
+# find threshold contours
+dst, thresh = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY_INV)
+cnts, hier = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# sort contours by area in descending order
+cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
+ipmc = cnts[1]  # second largest contour
+refcircle = cnts[0]  # largest contour
+
+# find bottommost and topmost point of IPMC
+extBot = tuple(ipmc[ipmc[:, :, 1].argmax()][0])
+extTop = tuple(ipmc[ipmc[:, :, 1].argmin()][0])
+
+# distance between bottommost and topmost point
+c = dist.euclidean(extTop, extBot)
+
+# find leftmost and rightmost points on the ref circle
+extLeftRef = tuple(refcircle[refcircle[:, :, 0].argmin()][0])
+extRightRef = tuple(refcircle[refcircle[:, :, 0].argmax()][0])
+
+# find absolute pixel distance between the two points on the ref circle
+# calculate pixelsPerMetric value
+dR = dist.euclidean(extLeftRef, extRightRef)
+pixelsPerMetric = dR / width
+
+# SUBSEQUENT IMAGES #
+images = glob.glob(r'image path')   # read subsequent images
+
+for fname in images:
+   image2 = cv2.imread(fname)
+
+   gray2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)  # convert image to grayscale
+   gray2 = cv2.GaussianBlur(gray2, (5, 5), 0)  # apply Gaussian Blur to remove noise
+
+   # obtain image threshold
+   # find threshold contours
+   dst, thresh = cv2.threshold(gray2, 120, 255, cv2.THRESH_BINARY_INV)
+   cnts2, hier = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+   # sort contours by area in descending order
+   cnts2 = sorted(cnts2, key=cv2.contourArea, reverse=True)
+   ipmc2 = cnts2[1]  # second largest contour
+
+   # find bottommost point of IPMC
+   # obtain absolute pixel distance between point and reference image point
+   extBot2 = tuple(ipmc2[ipmc2[:, :, 1].argmax()][0])
+   a = dist.euclidean(extBot2, extBot)
+   b = dist.euclidean(extTop, extBot2)
+   d2 = a / pixelsPerMetric  # convert to real-world value
+   measure_disp.append(d2)  # add value to array
+
+   # law of cosines to calculate angle
+   x = (b * b) + (c * c) - (a * a)
+   y = (2 * b * c)
+   angle_theta = math.acos(x / y)
+   angle_theta = math.degrees(angle_theta)  # convert to degrees
+   measure_angle.append(angle_theta)  # add value to array
+
+# write to file
+file = open("Displacement.txt", "w+")
+for item in measure_disp:
+   file.write("%s\n" % item)  # write array with new line
+file.close()
+
+# write to file
+file = open("Angle.txt", "w+")
+for item in measure_angle:
+   file.write("%s\n" % item)  # write array with new line
+file.close()
+
+cv2.destroyAllWindows()
