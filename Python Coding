@@ -7,8 +7,8 @@ import glob  # used to locate file directory
 
 def main():
     # Create the necessary data structures and variables
-    measure_disp = []  # array to store displacement values
-    measure_angle = []  # array to store angle values
+    measure_disp = []  # list to store displacement values
+    measure_angle = []  # list to store angle values
     width = 50  # width of the reference circle in mm
 
     # REFERENCE IMAGE #
@@ -65,25 +65,25 @@ def main():
         c = dist.euclidean(extBot2,
                            extBot)  # Euclidean pixel dist between IPMC bottommost point and ref bottommost point
         d2 = c / pixel_to_mm  # convert to real-world value
-        measure_disp.append(d2)  # add value to array
+        measure_disp.append(d2)  # add value to list
 
         # law of cosines to calculate angle
         x = (a * a) + (b * b) - (c * c)
         y = (2 * a * b)
         angle_gamma = math.acos(x / y)  # calculating arc cosine
         angle_gamma = math.degrees(angle_gamma)  # convert to degrees
-        measure_angle.append(angle_gamma)  # add value to array
+        measure_angle.append(angle_gamma)  # add value to list
 
     # write to file the displacement data
     file = open("Displacement.txt", "w+")  # create new text file
     for item in measure_disp:
-        file.write("%s\n" % item)  # write array with new line
+        file.write("%s\n" % item)  # write list with new line
     file.close()
 
     # write to file the angle data
     file = open("Angle.txt", "w+")  # create new text file
     for item in measure_angle:
-        file.write("%s\n" % item)  # write array with new line
+        file.write("%s\n" % item)  # write list with new line
     file.close()
 
     cv2.destroyAllWindows()
@@ -91,3 +91,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+# The code was written and tested using PyCharm 2022.1.1 (Community Edition)
+# The following is a full list of packages installed along with their respective versions
+# setuptools    60.2.0
+# pip           21.3.1
+# opencv-python 4.5.5.64
+# numpy	        1.22.4
+# scipy	        1.8.1
+# wheel	        0.37.1
+# Distance	    0.1.3
